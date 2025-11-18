@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Custom List</title>
+</head>
+<body>
+    {% load templates %}
+
+    <h1>Custom List</h1>
+
+    {% if data %}
+        {% for item in data %}
+            <div>
+                <pre>{{ item }}</pre>
+                <form method="POST" action="/custom/{{ name }}/{{ item|get_id }}/">
+                    {% csrf_token %}
+                    <button type="submit">Delete</button>
+                </form>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No items available.</p>
+    {% endif %}
+
+</body>
+</html>

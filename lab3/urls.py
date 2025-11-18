@@ -44,4 +44,6 @@ urlpatterns = [
     path('estimates/', views.EstimateListCreateUpdateAPIView.as_view(), name='estimate-list-create-update'),
     path('op-his/<int:id>/', views.OperationHistoryDetailAPIView.as_view(), name='operationhistory-detail'),
     path('op-his/', views.OperationHistoryListCreateUpdateAPIView.as_view(), name='operationhistory-list-create-update'),
+    path('custom/<str:name>/', views.getList, name='custom-list'),
+    path('custom/<str:name>/<int:id>/', views.deleteElement, name='custom-delete')
 ]

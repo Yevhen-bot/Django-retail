@@ -9,6 +9,8 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from .forms import WorkerForm
 from django.shortcuts import redirect
+from main.NetworkHelper import *
+from django.views.decorators.csrf import csrf_exempt
 
 # Create your views here.
 
@@ -186,6 +188,42 @@ class WorkerListCreateUpdateAPIView(APIView):
                 return redirect("worker-detail", id=new.id)
         else:
             return Response({"error": "incorrect form"}, status=status.HTTP_400_BAD_REQUEST)
+        
+@api_view(['GET'])
+def getList(request, name):
+    nh = NetworkHelper()
+    log = nh.login()
+    res = nh.send('get', f'api/{name}/', sessionid=log['sessionid'])
+    if res['status_code'] != 200:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    return render(request, 'custom_list.html', {"data": res['json'], "name": name})
+
+@api_view(['POST'])
+@csrf_exempt
+def deleteElement(request, name, id):
+    nh = NetworkHelper()
+    log = nh.login()
+    sessionid = log['sessionid']
+    res = nh.send("GET", f"api/{name}/", sessionid=sessionid)
+
+    if res['status_code'] != 200:
+        return Response({"error": "cannot fetch list"}, status=400)
+
+    data = res['json']
+    target = None
+    for item in data:
+        for key, value in item.items():
+            if key.lower().endswith("id") and str(value) == str(id):
+                target = value
+                break
+
+    if target is None:
+        return Response({"error": "object not found"}, status=404)
+    
+    nh.send("delete", f"api/{name}/{id}/", sessionid=sessionid)
+
+    return redirect(f"/custom/{name}/")
+
 
 # ---------------------Role-----------------------
 class RoleDetailAPIView(APIView):
