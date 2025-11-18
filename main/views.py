@@ -7,6 +7,8 @@ from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+from .forms import WorkerForm
+from django.shortcuts import redirect
 
 # Create your views here.
 
@@ -90,7 +92,25 @@ class WorkerDetailAPIView(APIView):
         obj = sr.get_by_id(id)
         if obj is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        return Response(ser(obj).data, status=status.HTTP_200_OK)
+        return render(request, "worker_detail.html", {"worker": ser(obj).data})
+    
+    # delete
+    def post(self, request, id):
+        # if not request.user.is_authenticated:
+        #     return Response(
+        #         {"detail": "Authentication credentials were not provided."},
+        #         status=status.HTTP_401_UNAUTHORIZED
+        #     )
+        
+        sr = WorkerRepository()
+        try:
+            res = sr.delete_by_id(id)
+        except Exception as e:
+            return Response({"Error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if res == 0:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        return render(request, "worker_deleted.html", {"id": id})
 
     def delete(self, request, id):
         if not request.user.is_authenticated:
@@ -131,21 +151,41 @@ class WorkerDetailAPIView(APIView):
 
 
 class WorkerListCreateUpdateAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
     
     def get(self, request):
         sr = WorkerRepository()
         ser = getSerializer(Worker)
         serializer = ser(sr.get_all(), many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        form = WorkerForm()
+        return render(request, "worker_list.html", {"workers": serializer.data,"form" : form})
+        # return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        ser = getSerializer(Worker)
-        serializer = ser(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        sr = WorkerRepository()
+        form = WorkerForm(request.POST)
+        if(form.is_valid()):
+            if(sr.get_by_id(form.cleaned_data["id"])):
+                sr.update_by_id(form.cleaned_data["id"],
+                                form.cleaned_data["first_name"],
+                                form.cleaned_data["last_name"],
+                                form.cleaned_data["email"],
+                                form.cleaned_data["birth_date"],
+                                form.cleaned_data["phone_number"],
+                                form.cleaned_data["store"],
+                                form.cleaned_data["role"])
+                return redirect("worker-detail", id=form.cleaned_data["id"])
+            else:
+                new = sr.add_one(form.cleaned_data["first_name"],
+                                form.cleaned_data["last_name"],
+                                form.cleaned_data["email"],
+                                form.cleaned_data["birth_date"],
+                                form.cleaned_data["phone_number"],
+                                form.cleaned_data["store"],
+                                form.cleaned_data["role"])
+                return redirect("worker-detail", id=new.id)
+        else:
+            return Response({"error": "incorrect form"}, status=status.HTTP_400_BAD_REQUEST)
 
 # ---------------------Role-----------------------
 class RoleDetailAPIView(APIView):

@@ -47,8 +47,14 @@ class WorkerRepository(IPersonRepository):
         w.email = email
         w.birth_date = birth_date
         w.phone_number = phone_number
-        w.store = Store.objects.filter(id=store).first()
-        w.role = Role.objects.filter(id=role).first()
+        if store is int:
+            w.store = Store.objects.filter(id=store).first()
+        else:
+            w.store = store
+        if role is int:
+            w.role = Role.objects.filter(id=role).first()
+        else:
+            w.role = role
 
         w.save()
         return 1

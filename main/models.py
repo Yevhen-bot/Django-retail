@@ -65,6 +65,9 @@ class Role(models.Model):
     class Meta:
         db_table = 'role'
 
+    def __str__(self):
+        return self.role
+
 class Store(models.Model):
     name = models.CharField(max_length=22)
     country = models.CharField(max_length=5)

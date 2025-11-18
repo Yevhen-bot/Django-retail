@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.sites",
     'main',
     'authentication.apps.AuthenticationConfig',
+    'templates',
     'rest_framework',
     'rest_framework.authtoken',
     "allauth",
@@ -75,7 +76,9 @@ ACCOUNT_EMAIL_VERIFICATION = "none"
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            BASE_DIR / "templates/lab3"
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
