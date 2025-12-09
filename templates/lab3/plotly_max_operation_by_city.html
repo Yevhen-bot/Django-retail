@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://cdn.plot.ly/plotly-2.34.0.min.js"></script>
+</head>
+
+<body>
+
+    <h2>Максимальні операції по містах</h2>
+
+    {{ data|json_script:"chart-data" }}
+
+    <div style="margin-bottom: 20px;">
+        <label>Мінімальна ціна для відображення: <span id="min-value">0</span></label><br>
+        <input id="price-slider" type="range" min="0" max="5200" step="20" value="0" style="width: 400px;">
+    </div>
+
+    <div id="chart"></div>
+
+    <script>
+        const chartDataRaw = JSON.parse(document.getElementById('chart-data').textContent);
+        const chartData = chartDataRaw.map(x => ({
+            ...x,
+            price: x.price ? Number(x.price) : 0
+        }));
+
+        function renderChart(filteredData) {
+            const trace = {
+                x: filteredData.map(x => x.city),
+                y: filteredData.map(x => x.price),
+                text: filteredData.map(x => `Item ID: ${x.item_id}<br>Operation ID: ${x.operation_id}<br>Client ID: ${x.client_id}<br>Date: ${x.date}`),
+                mode: 'markers',
+                type: 'scatter',
+                marker: { size: 12, color: 'rgb(31, 119, 180)' }
+            };
+
+            const layout = {
+                title: "Максимальні операції по містах",
+                xaxis: { title: "Місто" },
+                yaxis: { title: "Ціна" },
+                hovermode: 'closest'
+            };
+
+            Plotly.newPlot('chart', [trace], layout);
+        }
+
+        renderChart(chartData);
+
+        const slider = document.getElementById("price-slider");
+        const minValueSpan = document.getElementById("min-value");
+
+        slider.addEventListener("input", () => {
+            const minPrice = Number(slider.value);
+            minValueSpan.textContent = minPrice.toLocaleString();
+            const filtered = chartData.filter(x => x.price >= minPrice);
+            renderChart(filtered);
+        });
+    </script>
+
+</body>
+
+</html>

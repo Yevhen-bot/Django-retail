@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://cdn.plot.ly/plotly-2.34.0.min.js"></script>
+</head>
+
+<body>
+
+    <h2>Середня ціна операцій</h2>
+
+    {{ data|json_script:"chart-data" }}
+
+    <div style="margin-bottom: 20px;">
+        <label>Мінімальний відсоток від максимальної ціни: <span id="min-value">0%</span></label><br>
+        <input id="percent-slider" type="range" min="0" max="100" step="0.1" value="0" style="width: 400px;">
+    </div>
+
+    <div id="chart"></div>
+
+    <script>
+        const chartData = JSON.parse(document.getElementById('chart-data').textContent);
+        const totalSum = chartData.reduce((acc, x) => acc + x.avg_price, 0);
+
+        function renderChart(filteredData) {
+            const labels = filteredData.map(x => x.operation);
+            const values = filteredData.map(x => x.avg_price);
+
+            const trace = {
+                labels: labels,
+                values: values,
+                type: 'pie',
+                textinfo: 'label+percent',
+                hoverinfo: 'label+value'
+            };
+
+            const layout = {
+                title: "Середня ціна по операціях",
+                margin: { t: 50, b: 50, l: 50, r: 50 }
+            };
+
+            Plotly.newPlot('chart', [trace], layout);
+        }
+
+        renderChart(chartData);
+
+        const slider = document.getElementById("percent-slider");
+        const minValueSpan = document.getElementById("min-value");
+
+        slider.addEventListener("input", () => {
+            const percent = Number(slider.value);
+            minValueSpan.textContent = percent.toFixed(1) + "%";
+
+            const threshold = (percent / 100) * totalSum;
+            const filtered = chartData.filter(x => x.avg_price >= threshold);
+
+            renderChart(filtered);
+        });
+    </script>
+
+</body>
+
+</html>

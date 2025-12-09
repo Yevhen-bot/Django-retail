@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://cdn.plot.ly/plotly-2.34.0.min.js"></script>
+</head>
+
+<body>
+
+    <h2>Кількість оцінок по магазинах</h2>
+
+    {{ data|json_script:"chart-data" }}
+
+    <div style="margin-bottom: 20px;">
+        <label>Мінімальна кількість оцінок: <span id="min-value">0</span></label><br>
+        <input id="estimates-slider" type="range" min="0" max="50" step="1" value="0" style="width: 400px;">
+    </div>
+
+    <div id="chart"></div>
+
+    <script>
+        const chartDataRaw = JSON.parse(document.getElementById('chart-data').textContent);
+        const chartData = chartDataRaw.map(x => ({
+            ...x,
+            estimates_count: x.estimates_count ? Number(x.estimates_count) : 0
+        }));
+
+        function renderChart(filteredData) {
+            const trace = {
+                x: filteredData.map(x => x.name),
+                y: filteredData.map(x => x.estimates_count),
+                type: 'bar',
+                marker: { color: 'rgb(31, 119, 180)' }
+            };
+
+            const layout = {
+                title: "Кількість оцінок по магазинах",
+                xaxis: { title: "Магазин" },
+                yaxis: { title: "Кількість оцінок" }
+            };
+
+            Plotly.newPlot('chart', [trace], layout);
+        }
+
+        renderChart(chartData);
+
+        const slider = document.getElementById("estimates-slider");
+        const minValueSpan = document.getElementById("min-value");
+
+        slider.addEventListener("input", () => {
+            const minEstimates = Number(slider.value);
+            minValueSpan.textContent = minEstimates;
+
+            const filtered = chartData.filter(x => x.estimates_count >= minEstimates);
+            renderChart(filtered);
+        });
+    </script>
+
+</body>
+
+</html>

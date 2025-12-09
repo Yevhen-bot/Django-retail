@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://cdn.plot.ly/plotly-2.34.0.min.js"></script>
+</head>
+
+<body>
+
+    <h2>Доходи магазинів</h2>
+
+    {{ data|json_script:"chart-data" }}
+
+    <div style="margin-bottom: 20px;">
+        <label>Мінімальний дохід: <span id="min-value">0</span></label><br>
+        <input id="income-slider" type="range" min="0" max="10000000" step="50000" value="0" style="width: 400px;">
+    </div>
+
+    <div id="chart"></div>
+
+    <script>
+        const chartData = JSON.parse(document.getElementById('chart-data').textContent);
+
+        function renderChart(filteredData) {
+            const names = filteredData.map(x => x.name);
+            const income = filteredData.map(x => x.total_income);
+
+            const trace = {
+                x: names,
+                y: income,
+                type: 'bar'
+            };
+
+            Plotly.newPlot('chart', [trace], {
+                title: "Прибуток по магазинах",
+                xaxis: { title: "Магазин" },
+                yaxis: { title: "Дохід" }
+            });
+        }
+
+        renderChart(chartData);
+
+        const slider = document.getElementById("income-slider");
+        const minValueSpan = document.getElementById("min-value");
+
+        slider.addEventListener("input", () => {
+            const minIncome = Number(slider.value);
+            minValueSpan.textContent = minIncome.toLocaleString();
+
+            const filtered = chartData.filter(x => x.total_income >= minIncome);
+
+            renderChart(filtered);
+        });
+    </script>
+
+</body>
+
+</html>

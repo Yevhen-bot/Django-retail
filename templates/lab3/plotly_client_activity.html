@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://cdn.plot.ly/plotly-2.34.0.min.js"></script>
+</head>
+
+<body>
+
+    <h2>Активність клієнтів</h2>
+
+    {{ data|json_script:"chart-data" }}
+
+    <div style="margin-bottom: 20px;">
+        <label>Мінімальна кількість операцій: <span id="ops-value">0</span></label><br>
+        <input id="ops-slider" type="range" min="0" max="200" step="1" value="0" style="width: 400px;"><br>
+        <label>Мінальні загальні витрати: <span id="spent-value">0</span></label><br>
+        <input id="spent-slider" type="range" min="0" max="1000000" step="1000" value="0" style="width: 400px;">
+    </div>
+
+    <div id="chart"></div>
+
+    <script>
+        const chartDataRaw = JSON.parse(document.getElementById('chart-data').textContent);
+        const chartData = chartDataRaw.map(x => ({
+            ...x,
+            total_spent: x.total_spent ? Number(x.total_spent) : 0,
+            operations_count: x.operations_count ? Number(x.operations_count) : 0
+        }));
+
+        function renderChart(filteredData) {
+            const trace = {
+                x: filteredData.map(x => x.operations_count),
+                y: filteredData.map(x => x.total_spent),
+                text: filteredData.map(x => x.first_name + ' ' + x.last_name),
+                mode: 'markers',
+                type: 'scatter',
+                marker: { size: 12, color: 'rgb(31, 119, 180)' }
+            };
+
+            const layout = {
+                title: "Активність клієнтів",
+                xaxis: { title: "Кількість операцій" },
+                yaxis: { title: "Загальні витрати" },
+                hovermode: 'closest'
+            };
+
+            Plotly.newPlot('chart', [trace], layout);
+        }
+
+        renderChart(chartData);
+
+        const opsSlider = document.getElementById("ops-slider");
+        const spentSlider = document.getElementById("spent-slider");
+        const opsValueSpan = document.getElementById("ops-value");
+        const spentValueSpan = document.getElementById("spent-value");
+
+        function updateChart() {
+            const minOps = Number(opsSlider.value);
+            const minSpent = Number(spentSlider.value);
+
+            opsValueSpan.textContent = minOps;
+            spentValueSpan.textContent = minSpent.toLocaleString();
+
+            const filtered = chartData.filter(x => x.operations_count >= minOps && x.total_spent >= minSpent);
+            renderChart(filtered);
+        }
+
+        opsSlider.addEventListener("input", updateChart);
+        spentSlider.addEventListener("input", updateChart);
+    </script>
+
+</body>
+
+</html>
