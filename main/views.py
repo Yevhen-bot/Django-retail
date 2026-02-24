@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from .repositories import *
@@ -7,11 +7,8 @@ from .repositories.PandasRepository import PandasRepository
 from .serializers import *
 import pandas as pd
 from rest_framework import status
-from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from .forms import WorkerForm
-from django.shortcuts import redirect
 from main.NetworkHelper import *
 from django.views.decorators.csrf import csrf_exempt
 from bokeh.plotting import figure
@@ -31,6 +28,8 @@ import numpy as np
 
 # ---------------------Store-----------------------
 class StoreDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, id):
         sr = StoreRepository()
         ser = getSerializer(Store)
@@ -95,6 +94,8 @@ class StoreListCreateUpdateAPIView(APIView):
         
 # ---------------------Worker-----------------------
 class WorkerDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, id):
         sr = WorkerRepository()
         ser = getSerializer(Worker)
@@ -102,33 +103,9 @@ class WorkerDetailAPIView(APIView):
         obj = sr.get_by_id(id)
         if obj is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        return render(request, "worker_detail.html", {"worker": ser(obj).data})
-    
-    # delete
-    def post(self, request, id):
-        # if not request.user.is_authenticated:
-        #     return Response(
-        #         {"detail": "Authentication credentials were not provided."},
-        #         status=status.HTTP_401_UNAUTHORIZED
-        #     )
-        
-        sr = WorkerRepository()
-        try:
-            res = sr.delete_by_id(id)
-        except Exception as e:
-            return Response({"Error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
-        if res == 0:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        return render(request, "worker_deleted.html", {"id": id})
+        return Response(ser(obj).data, status=status.HTTP_200_OK)
 
     def delete(self, request, id):
-        if not request.user.is_authenticated:
-            return Response(
-                {"detail": "Authentication credentials were not provided."},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-        
         sr = WorkerRepository()
         try:
             res = sr.delete_by_id(id)
@@ -161,41 +138,21 @@ class WorkerDetailAPIView(APIView):
 
 
 class WorkerListCreateUpdateAPIView(APIView):
-    # permission_classes = [IsAuthenticated]
-    
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         sr = WorkerRepository()
         ser = getSerializer(Worker)
         serializer = ser(sr.get_all(), many=True)
-        form = WorkerForm()
-        return render(request, "worker_list.html", {"workers": serializer.data,"form" : form})
-        # return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        sr = WorkerRepository()
-        form = WorkerForm(request.POST)
-        if(form.is_valid()):
-            if(sr.get_by_id(form.cleaned_data["id"])):
-                sr.update_by_id(form.cleaned_data["id"],
-                                form.cleaned_data["first_name"],
-                                form.cleaned_data["last_name"],
-                                form.cleaned_data["email"],
-                                form.cleaned_data["birth_date"],
-                                form.cleaned_data["phone_number"],
-                                form.cleaned_data["store"],
-                                form.cleaned_data["role"])
-                return redirect("worker-detail", id=form.cleaned_data["id"])
-            else:
-                new = sr.add_one(form.cleaned_data["first_name"],
-                                form.cleaned_data["last_name"],
-                                form.cleaned_data["email"],
-                                form.cleaned_data["birth_date"],
-                                form.cleaned_data["phone_number"],
-                                form.cleaned_data["store"],
-                                form.cleaned_data["role"])
-                return redirect("worker-detail", id=new.id)
-        else:
-            return Response({"error": "incorrect form"}, status=status.HTTP_400_BAD_REQUEST)
+        ser = getSerializer(Worker)
+        serializer = ser(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
 @api_view(['GET'])
 def getList(request, name):
@@ -587,6 +544,8 @@ def bokeh_max_operation_by_city(request):
 
 # ---------------------Role-----------------------
 class RoleDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, id):
         sr = RoleRepository()
         ser = getSerializer(Role)
@@ -647,6 +606,8 @@ class RoleListCreateUpdateAPIView(APIView):
 
 # ---------------------Operation-----------------------
 class OperationDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, id):
         sr = OperationRepository()
         ser = getSerializer(Operation)
@@ -707,6 +668,8 @@ class OperationListCreateUpdateAPIView(APIView):
 
 # ---------------------Client-----------------------
 class ClientDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, id):
         sr = WorkerRepository()
         ser = getSerializer(Client)
@@ -771,6 +734,8 @@ class ClientListCreateUpdateAPIView(APIView):
 
 # ---------------------Item-----------------------
 class ItemDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, id):
         sr = ItemRepository()
         ser = getSerializer(Item)
@@ -832,6 +797,8 @@ class ItemListCreateUpdateAPIView(APIView):
 
 # ---------------------Estimate-----------------------
 class EstimateDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, id):
         sr = EstimateRepository()
         ser = getSerializer(Estimate)
@@ -895,6 +862,8 @@ class EstimateListCreateUpdateAPIView(APIView):
         
 # ---------------------OperationHistory-----------------------
 class OperationHistoryDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, id):
         sr = OperationHistoryRepository()
         ser = getSerializer(OperationHistory)
